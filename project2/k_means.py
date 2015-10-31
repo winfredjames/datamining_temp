@@ -90,7 +90,6 @@ end_time = time.clock()
 print "Total Offline cost is ", end_time-start_time,"s"
 
 print(no_of_iterations)
-<<<<<<< HEAD:project2/k_means
 
 
 majority_count={}

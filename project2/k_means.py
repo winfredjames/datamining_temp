@@ -1,8 +1,11 @@
+from __future__ import division
 import csv
+from decimal import Decimal
 import numpy as np
 import time
 import random
-from math import sqrt
+from math import sqrt, log
+
 
 inputfile=[]
 temp=[]
@@ -11,14 +14,20 @@ topics=[]
 def get_distance(u,v,type):
     u=u[1:]
     v=v[1:]
-    u=np.array(map(int, u))
-    v=np.array(map(int, v))
+    u=np.array(map(float, u))
+    v=np.array(map(float, v))
     if(type==1):    #euclidean
         diff = u - v
         return sqrt(np.dot(diff, diff))
     if(type==2):    #cosine
         return 1 - (np.dot(u, v) / (sqrt(np.dot(u, u)) * sqrt(np.dot(v, v))))
 
+def get_entropy(cluster_dict,size):
+    ans=0
+    for values in cluster_dict.itervalues():
+        P=values/size;
+        ans= ans - (P*log(P if P>0 else 1)/log(2))
+    return ans
 
 def mean_point(list_of_vectors):
     list_of_vectors=np.array(list_of_vectors)
@@ -33,7 +42,7 @@ with open('dtm_idf_small.csv','rb') as csvfile:
     for row in reader:
         topics_temp = row[0:1]
         temp = row[2:]
-        temp=map(int, temp)
+        temp=map(float, temp)
         temp.insert(0,id)
         topics_temp.insert(0,id)
         inputfile.append(temp)
@@ -89,13 +98,9 @@ while True:
 end_time = time.clock()
 print "Total Offline cost is ", end_time-start_time,"s"
 
-print(no_of_iterations)
-
-
-majority_count={}
-
 #cluster validation
-
+majority_count={}
+entropies=[]
 for i in range (0,cluster_lists.__len__()):
     for j in range (0,cluster_lists[i].__len__()):
         key=topics[cluster_lists[i][j][0]-1][1]
@@ -103,4 +108,14 @@ for i in range (0,cluster_lists.__len__()):
             majority_count[key]=majority_count.get(key)+1
         else:
             majority_count[key]=1
+    entropy=get_entropy(majority_count,cluster_lists[i].__len__())
+    entropies.append(entropy)
     majority_count.clear()
+
+#final weighted entropy
+final_entropy=0
+for i in range(0,cluster_lists.__len__()):
+    print cluster_lists[i].__len__()
+    final_entropy=final_entropy+(entropies[i]*cluster_lists[i].__len__()/inputfile.__len__())
+
+print final_entropy

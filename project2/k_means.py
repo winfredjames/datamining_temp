@@ -33,10 +33,44 @@ def mean_point(list_of_vectors):
     list_of_vectors=np.array(list_of_vectors)
     return np.mean(list_of_vectors,axis=0)
 
-id=1
+
+
+no = raw_input("Enter the file you want to work with:\n"
+               "1. Feature Vector using IDF \n"
+               "2. Small data set\n")
+if no=='1':
+    filename='dtm_idf.csv'
+elif no=='2':
+    filename='dtm_idf_small.csv'
+else:
+    print "Error: enter valid input"
+    exit()
+
+max_iterations=10
+
+k = (raw_input("Enter the no of clusters(default 2):\n")) or '2'
+
+if not k.isdigit() or (int(k)>20 and int(k)>0):
+    print("Enter valid clusters")
+    exit()
+else:
+    k=int(k)
+
+dist_type=int(raw_input("Enter the distance metric:(default 1) \n"
+                        "1. Euclidean \n 2. Manhattan \n"))
+if not(dist_type==1 or dist_type==2):
+    print("Enter valid input")
+    exit()
+
+max_iterations=(raw_input("No.of iterations: (default until k-means converges"))
+
+if not max_iterations.isdigit() or int(max_iterations)<0:
+    print("Enter valid input")
+    exit()
 
 #for seperating topics and adding ID values
-with open('dtm_idf_small.csv','rb') as csvfile:
+id=1
+with open(filename,'rb') as csvfile:
     csvfile.next()
     reader = csv.reader(csvfile)
     for row in reader:
@@ -57,9 +91,6 @@ cluster_track={}
 for i in range(1,inputfile.__len__()+1):
     cluster_track[i]=-1
 
-k=2
-dist_type=1
-max_iterations=10
 
 clusters=random.sample(inputfile,k)
 

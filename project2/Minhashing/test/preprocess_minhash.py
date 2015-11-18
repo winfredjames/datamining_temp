@@ -1,3 +1,4 @@
+from __future__ import division
 from nltk.corpus import stopwords
 import numpy as np
 import re
@@ -6,6 +7,9 @@ from bs4 import BeautifulSoup
 from os import listdir
 from nltk import PorterStemmer
 import string
+from nltk.util import ngrams
+from nltk.tokenize import word_tokenize
+from nltk.util import ngrams
 
 
 def clean_up(text):
@@ -15,59 +19,84 @@ def clean_up(text):
         text = re.sub('[a-z]*&#.*;', ' ', text);
         text = re.sub('\d+', ' ', text)
         text = re.sub('<[^>]*>', ' ', text)
-
         # remove punctuations and convert to lower case
         text = "".join(word.lower() for word in text if word not in string.punctuation)
-
         # remove stop words
         stop_words = stopwords.words("english")
         task_related_common_words = ["reuter", "said", "told", "mln"]
         stop_words = stop_words + task_related_common_words
         text = " ".join(word for word in text.split() if word not in stop_words)
-
         # stem words
         stemmer = PorterStemmer()
         text = " ".join(stemmer.stem(word) for word in text.split())
 
     return str(text.encode('utf-8'))
 
-def find_k_shingles(tf_idf_settings,tf_idf_result,count):
+
+def find_k_shingles(tf_idf_settings, tf_idf_result, count):
     # http://stackoverflow.com/questions/16078015/
-    k_shingles= set()
+    k_shingles = {}
     scores = zip(tf_idf_settings.get_feature_names(),
                  np.asarray(tf_idf_result.sum(axis=0)).ravel())
     sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
-    id=1
+    id = 0
     for item in sorted_scores:
-        k_shingles.add(item[0])
-        print "adding :",item[0]
-        id+=1;
-        if id==count:
+        k_shingles[str(item[0])] = id
+        print "adding :", item[0]
+        if id == count:
             break
+        id += 1
     return k_shingles
 
+
 def main():
-    parsed_documents={}
+    parsed_documents = []
+    # inputs
     k = int(raw_input("K shingles: 1,2,3,4 : "))
     feature_count = int(raw_input("No of features(words) 500,1000,1500..: "))
 
     dir_path = "/Users/winfredjames/Desktop/datamining temp/datamining_temp/project2/Minhashing/test"
-    doc_id=1
-    for file in listdir(dir_path):
-        print file
-        raw_data = BeautifulSoup(open(dir_path + '/' + file), "html.parser")
+
+    for current_file in listdir(dir_path):
+        print current_file
+        raw_data = BeautifulSoup(open(dir_path + '/' + current_file), "html.parser")
         for document in raw_data.findAll("reuters"):
-            temp=[]
-            if document.find("body") is not None and document.find("topics") is not None:
-                parsed_documents[doc_id]=clean_up(document.find("body").string);
-                doc_id+=1;
+            if document.find("body") is not None:
+                parsed_documents.append(clean_up(document.find("body").string))
 
-    tf_idf_settings = TfidfVectorizer(ngram_range=(k,k))
-    output = tf_idf_settings.fit_transform(parsed_documents.values())
+    tf_idf_settings = TfidfVectorizer(ngram_range=(k, k))
+    output = tf_idf_settings.fit_transform(parsed_documents)
 
-    k_shingles=find_k_shingles(tf_idf_settings,output,feature_count)
+    k_shingles = find_k_shingles(tf_idf_settings, output, feature_count)
+
+    output = np.zeros((k_shingles.__len__(), parsed_documents.__len__()), dtype=np.int)
+
+    doc_id = 0
+    for doc in parsed_documents:
+        n_grams = ngrams(word_tokenize(doc), k)
+        list = [' '.join(grams) for grams in n_grams]
+        for each_gram in list:
+            if k_shingles.__contains__(each_gram):
+                output[k_shingles.get(each_gram)][doc_id] = 1
+        doc_id += 1
+
+    jaccard_similarity = np.zeros((parsed_documents.__len__(), parsed_documents.__len__()), dtype=np.float)
+
+    for i in range(0, parsed_documents.__len__() - 1):
+        for j in range(i + 1, parsed_documents.__len__()):
+            equal_ones = 0
+            any_ones = 0
+            jac_sim = 0
+            for l in range(0, k_shingles.__len__()):
+                if output[l][i] == 1 and output[l][j] == 1:
+                    equal_ones += 1
+                elif output[l][i] == 1 or output[l][j] == 1:
+                    any_ones += 1
+            jac_sim = equal_ones / (equal_ones + any_ones)
+            jaccard_similarity[i][j] = jac_sim
 
 
-    print "gg"
+    print "end of program for break point purpose"
+
+
 main()
-

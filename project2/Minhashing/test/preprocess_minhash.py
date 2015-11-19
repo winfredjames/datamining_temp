@@ -10,6 +10,8 @@ import string
 from nltk.util import ngrams
 from nltk.tokenize import word_tokenize
 from nltk.util import ngrams
+import random
+import sys
 
 
 def clean_up(text):
@@ -54,6 +56,7 @@ def main():
     # inputs
     k = int(raw_input("K shingles: 1,2,3,4 : "))
     feature_count = int(raw_input("No of features(words) 500,1000,1500..: "))
+    no_hashes = int(raw_input("Enter the no. of hashes "))
 
     dir_path = "/Users/winfredjames/Desktop/datamining temp/datamining_temp/project2/Minhashing/test"
 
@@ -69,6 +72,7 @@ def main():
 
     k_shingles = find_k_shingles(tf_idf_settings, output, feature_count)
 
+    #output is binary matrix (shingles X no.of docs)
     output = np.zeros((k_shingles.__len__(), parsed_documents.__len__()), dtype=np.int)
 
     doc_id = 0
@@ -80,7 +84,7 @@ def main():
                 output[k_shingles.get(each_gram)][doc_id] = 1
         doc_id += 1
 
-    jaccard_similarity = np.zeros((parsed_documents.__len__(), parsed_documents.__len__()), dtype=np.float)
+    true_jaccard_similarity = np.zeros((parsed_documents.__len__(), parsed_documents.__len__()), dtype=np.float)
 
     for i in range(0, parsed_documents.__len__() - 1):
         for j in range(i + 1, parsed_documents.__len__()):
@@ -93,8 +97,33 @@ def main():
                 elif output[l][i] == 1 or output[l][j] == 1:
                     any_ones += 1
             jac_sim = equal_ones / (equal_ones + any_ones)
-            jaccard_similarity[i][j] = jac_sim
+            true_jaccard_similarity[i][j] = jac_sim
 
+
+    a_const = random.sample(range(1, pow(2,18)), no_hashes)
+    b_const = random.sample(range(1, pow(2,18)), no_hashes)
+    large_prime =  77747
+
+    signature_mat = np.empty((no_hashes, parsed_documents.__len__()),dtype=np.int)
+    signature_mat.fill(pow(2,18))
+
+    for i in range(0, output.__len__()):
+        for j in range(0,no_hashes):
+            h = ((a_const[j]*i + b_const[j]) % large_prime) % output.__len__()
+            for k in range(0,parsed_documents.__len__()):
+               if output[i][k]==1:
+                if k < signature_mat[j][k]:
+                    signature_mat[j][k] = h
+
+    jaccard_similarity = np.zeros((parsed_documents.__len__(), parsed_documents.__len__()), dtype=np.float)
+
+    for i in range(0, parsed_documents.__len__()-1):
+        for j in range(i+1, parsed_documents.__len__()):
+            count = 0
+            for m in range(0, no_hashes):
+                if signature_mat[m][i] == signature_mat[m][j]:
+                    count+=1
+            jaccard_similarity[i][j]=count/no_hashes
 
     print "end of program for break point purpose"
 

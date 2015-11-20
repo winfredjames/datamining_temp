@@ -78,6 +78,8 @@ if not max_iterations.isdigit() or int(max_iterations)<0:
     print("Enter valid input")
     exit()
 max_iterations=int(max_iterations)
+
+
 #for seperating topics and adding ID values
 id=1
 with open(filename,'rb') as csvfile:
@@ -119,8 +121,6 @@ while True:
     no_of_iterations=no_of_iterations+1
     cluster_lists = [ [] for c in clusters]
     total_updates=0
-    #for i in range(0,count):
-     #   cluster_lists[i].append(clusters[i])
     for row in inputfile:
         if len(clusters[0])!=0:
             smallest_distance=get_distance(row, clusters[0],dist_type)
@@ -155,10 +155,9 @@ while True:
                 clusters[k]=clu[0]
                 clu=[]
         count=len(clusters)
-    #print no_of_iterations
 end_time = time.clock()
 
-#calc_variance(cluster_lists,count)
+calc_variance(cluster_lists,count)
 
 #cluster validation
 majority_count={}
@@ -182,6 +181,5 @@ for i in range(0,cluster_lists.__len__()):
 
 
 #output
-#print entropies
 print "Total Offline cost is ", end_time-start_time,"s"
 print "Entropy " , final_entropy

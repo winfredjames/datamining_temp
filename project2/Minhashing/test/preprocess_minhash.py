@@ -99,7 +99,6 @@ def main():
             jac_sim = equal_ones / (equal_ones + any_ones)
             true_jaccard_similarity[i][j] = jac_sim
 
-
     a_const = random.sample(range(1, pow(2,18)), no_hashes)
     b_const = random.sample(range(1, pow(2,18)), no_hashes)
     large_prime =  77747
@@ -126,6 +125,5 @@ def main():
             jaccard_similarity[i][j]=count/no_hashes
 
     print "end of program for break point purpose"
-
 
 main()
